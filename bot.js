@@ -161,3 +161,16 @@ if (message.content.toLowerCase() === 'owo') {
 
 // BOTU BAŞLAT
 client.login(process.env.TOKEN);
+
+// Render için HTTP sunucusu (zorunlu değil ama Render'da şart gibi)
+const express = require('express');
+const app = express();
+const port = process.env.PORT || 3000;
+
+app.get('/', (req, res) => {
+  res.send('Bot aktif ve çalışıyor.');
+});
+
+app.listen(port, () => {
+  console.log(`Render HTTP sunucusu ${port} portunda dinleniyor.`);
+});
