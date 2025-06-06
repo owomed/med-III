@@ -14,11 +14,11 @@ const emojiPairs = [
 
 // Mesaj şablonu
 const messageTemplate = `
-(?)    **günlük checklist**'ini sunucumuzda tamamlayan **ilk 3 kişiye 100,000** <:med_cowoncy:1380158013754839132> ﻿﻿﻿ vereceğiz.
+Günaydınlar (?)  **günlük checklist**'ini sunucumuzda tamamlayan **ilk 3 kişiye 100,000** <:med_cowoncy:1380158013754839132> ﻿﻿﻿ vereceğiz.
 
->   __**Güncel stok: 3**__ 
+>    __**Güncel stok: 3**__ 
 
-(!)   Oynarken **wb, wh ve owo** yazarak oynamanız gerekiyor.
+(!)    Oynarken **wb, wh ve owo** yazarak oynamanız gerekiyor.
 
 (!) **OwO** yazmak zorunludur, yazmayan kişiler ödülden yararlanamayacaktır.
 
@@ -27,12 +27,12 @@ const messageTemplate = `
 (!) Bitiren kişiler <#1238413789540388917> kanalına **wcl ve !rr** yazıp göndersin.
 
 Herkese kolay gelsin, iyi oyunlar  
-(!)   Günlük statınız en az 75 olmalı! Mesaj atıldığında statınızı göremezsek veya 75'ten düşükse kazanmış sayılmazsınız
+(!)    Günlük statınız en az 75 olmalı! Mesaj atıldığında statınızı göremezsek veya 75'ten düşükse kazanmış sayılmazsınız
 Etkinliğe burada başlanıp burada bitirilmesi gerekmekte.
 `;
 
 module.exports = (client) => {
-  // Her gün saat 10:00'da çalışır
+  // Her gün Türkiye saatiyle saat 10:00'da çalışır
   cron.schedule('0 10 * * *', async () => {
     try {
       const now = new Date();
@@ -51,5 +51,8 @@ module.exports = (client) => {
     } catch (err) {
       console.error("Mesaj gönderilirken hata oluştu:", err);
     }
+  }, {
+    // Bu kısım zaman dilimini belirler
+    timezone: "Europe/Istanbul" // Türkiye saati için uygun zaman dilimi
   });
 };
