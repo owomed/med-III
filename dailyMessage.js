@@ -14,7 +14,7 @@ const emojiPairs = [
 
 // Mesaj şablonu
 const messageTemplate = `
-Günaydınlar (?)  **günlük checklist**'ini sunucumuzda tamamlayan **ilk 3 kişiye 100,000** <:med_cowoncy:1380158013754839132> ﻿﻿﻿ vereceğiz.
+Günaydınlar <@&1238180102454513845> (?)  **günlük checklist**'ini sunucumuzda tamamlayan **ilk 3 kişiye 100,000** <:med_cowoncy:1380158013754839132> ﻿﻿﻿ vereceğiz.
 
 >    __**Güncel stok: 3**__ 
 
