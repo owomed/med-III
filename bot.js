@@ -152,7 +152,7 @@ if (message.content.toLowerCase() === 'owo') {
   if (!command) return;
 
   try {
-    await command.execute(message, args);
+    await command.execute(client, message, args);
   } catch (error) {
     console.error('Komut çalıştırma hatası:', error);
     message.reply('Komut çalıştırılırken bir hata oluştu.');
