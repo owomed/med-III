@@ -21,10 +21,7 @@ const client = new Client({
         GatewayIntentBits.DirectMessages,
         GatewayIntentBits.DirectMessageReactions
     ],
-    presence: {
-        status: 'idle',
-        activities: [{ name: 'MED Ⅲ', type: ActivityType.Listening }],
-    },
+    
 });
 
 client.commands = new Collection();
