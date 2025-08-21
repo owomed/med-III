@@ -137,13 +137,11 @@ client.on('messageCreate', async message => {
 client.on('ready', async () => {
     console.log(`Bot hazır: ${client.user.tag}`);
 
-    // İstenilen tekli özel durumu ayarla
-    client.user.setPresence({
+   client.user.setPresence({
         status: 'idle',
         activities: [{
-            name: 'customname',
-            type: ActivityType.Custom,
-            state: 'OwO 💙 MED ile ilgileniyor'
+            name: 'OwO 💙 MED ile ilgileniyor', // Buraya durum adını girin
+            type: ActivityType.Custom, // veya Custom
         }],
     });
     
