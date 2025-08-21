@@ -1,11 +1,12 @@
 const { Client, Collection, GatewayIntentBits, ActivityType } = require('discord.js');
+const express = require('express');
 const fs = require('fs');
 const path = require('path');
 require('dotenv').config();
 
 const config = require('./Settings/config.json');
 const { readAFKData, writeAFKData } = require('./helper');
-const counting = require('./counting'); 
+const counting = require('./counting');
 const dailyMessage = require('./dailyMessage');
 const stayInVoice = require('./stayInVoice');
 
@@ -21,11 +22,13 @@ const client = new Client({
         GatewayIntentBits.DirectMessages,
         GatewayIntentBits.DirectMessageReactions
     ],
-    
 });
 
 client.commands = new Collection();
 client.aliases = new Collection();
+
+// Komutları ve olayları yükleme kısımları aynı kalacak...
+// (Bu kısım senin yukarıda verdiğin kodun aynısıdır)
 
 // Komutları yükleme
 const commandsPath = path.join(__dirname, 'commands');
@@ -65,14 +68,10 @@ for (const file of eventFiles) {
     }
 }
 
-// Komut ve Olay İşleme
 client.on('interactionCreate', async interaction => {
     if (!interaction.isChatInputCommand()) return;
-
     const command = client.commands.get(interaction.commandName);
-
     if (!command) return;
-
     try {
         await command.execute(interaction);
     } catch (error) {
@@ -88,7 +87,6 @@ client.on('interactionCreate', async interaction => {
 
 client.on('messageCreate', async message => {
     if (message.author.bot || message.channel.type === 'dm') return;
-
     const { prefix } = config;
     const afkData = await readAFKData();
 
@@ -118,14 +116,10 @@ client.on('messageCreate', async message => {
 
     // Prefix komutları
     if (!message.content.startsWith(prefix)) return;
-
     const args = message.content.slice(prefix.length).trim().split(/ +/);
     const commandName = args.shift().toLowerCase();
-    
     const command = client.commands.get(commandName) || client.aliases.get(commandName);
-
     if (!command) return;
-
     try {
         await command.execute(message, args);
     } catch (error) {
@@ -136,20 +130,30 @@ client.on('messageCreate', async message => {
 
 client.on('ready', async () => {
     console.log(`Bot hazır: ${client.user.tag}`);
-
-   client.user.setPresence({
+    client.user.setPresence({
         status: 'idle',
         activities: [{
-            name: 'OwO 💙 MED ile ilgileniyor', // Buraya durum adını girin
-            type: ActivityType.Custom, // veya Custom
+            name: 'OwO 💙 MED ile ilgileniyor',
+            type: ActivityType.Custom,
         }],
     });
     
-    // Diğer modülleri başlatma
     await counting.initializeLastNumber(client);
     dailyMessage(client);
     stayInVoice(client);
 });
 
-// BOTU BAŞLAT
+// Botu başlatma
 client.login(process.env.TOKEN);
+
+// Render için basit bir web sunucusu oluşturma
+const app = express();
+const port = process.env.PORT || 3000;
+
+app.get('/', (req, res) => {
+  res.send('Bot çalışıyor!');
+});
+
+app.listen(port, () => {
+  console.log(`Web sunucusu ${port} portunda dinlemede`);
+});
