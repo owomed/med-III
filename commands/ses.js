@@ -27,7 +27,7 @@ module.exports = {
         } else {
             // Prefix komutu ise
             responseMethod = (content) => interaction.reply({ content });
-            const channelId = '1243483710670635079';
+            const channelId = '1235643294973956158';
             voiceChannel = interaction.guild.channels.cache.get(channelId);
         }
 
