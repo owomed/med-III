@@ -68,6 +68,11 @@ for (const file of eventFiles) {
     }
 }
 
+// Şanslı sayı oyununun değişkenlerini en üste ekledik
+let activeEventChannels = {};
+const settings = {};
+const userCooldowns = {};
+
 client.on('interactionCreate', async interaction => {
     if (!interaction.isChatInputCommand()) return;
     const command = client.commands.get(interaction.commandName);
@@ -112,7 +117,69 @@ client.on('messageCreate', async message => {
     // Sayı sayma oyunu
     if (message.channel.id === counting.countingChannelId) {
         await counting.handleCounting(message);
+        return; // Sayı sayma işlemi yapıldıysa diğer komutları kontrol etme
     }
+
+    // ---
+    // Şanslı sayı oyunu
+    const channelId = message.channel.id;
+
+    if (message.content === '.sayı') {
+        const currentTime = Date.now();
+        const eventEndTime = currentTime + 3600000;
+        const randomNumbers = [Math.floor(Math.random() * 152), Math.floor(Math.random() * 152)];
+    
+        settings[channelId] = {
+            luckyNumbers: randomNumbers,
+            startTime: currentTime,
+            eventEndTime: eventEndTime
+        };
+    
+        activeEventChannels[channelId] = true;
+    
+        await message.channel.send(`
+## Merhabalar, OwO MED ailesi <a:owo:1235316485942022185>
+    
+Saat <t:${Math.floor(eventEndTime / 1000)}:t> kadar <#1238045899360309289>, <#1277593114269454396>, <#1277593211363262546> ve <#1277593298047078460> kanallarında şanslı sayı oyunu oynuyoruz.
+    
+> OwO yazarak <@1236235490118860880>'ün vereceği sayılardan şanslı sayılara dikkat ediniz.
+>  
+> *Şanslı sayılar:* **${randomNumbers.join(', ')}**
+    
+**STOK:**
+> *Stoklar sınırsızdır...*
+> - Şanslı sayı çıkan kişiler; ödül alabilmeniz için sunucu içinde __**en az 100 OwO statınız olması gerekiyor.**__
+`);
+        setTimeout(() => {
+            delete settings[channelId];
+            delete activeEventChannels[channelId];
+        }, 3600000);
+    }
+    
+    if (message.content.toLowerCase() === 'owo') {
+        const channelSettings = settings[channelId];
+        if (!channelSettings || !activeEventChannels[channelId]) return;
+    
+        const userId = message.author.id;
+        const now = Date.now();
+    
+        if (userCooldowns[userId] && now - userCooldowns[userId] < 10000) return;
+    
+        userCooldowns[userId] = now;
+    
+        const randomResponse = Math.floor(Math.random() * 152);
+        let replyMessage = '';
+    
+        if (channelSettings.luckyNumbers.includes(randomResponse)) {
+            replyMessage += `<a:med_dogru:1278584943240544358> **${randomResponse}**`;
+            await message.pin();
+        } else {
+            replyMessage += `<a:med_yanlis:1278584865796784170> **${randomResponse}**`;
+        }
+    
+        await message.reply(replyMessage);
+    }
+    // ---
 
     // Prefix komutları
     if (!message.content.startsWith(prefix)) return;
@@ -151,9 +218,9 @@ const app = express();
 const port = process.env.PORT || 3000;
 
 app.get('/', (req, res) => {
-  res.send('Bot çalışıyor!');
+    res.send('Bot çalışıyor!');
 });
 
 app.listen(port, () => {
-  console.log(`Web sunucusu ${port} portunda dinlemede`);
+    console.log(`Web sunucusu ${port} portunda dinlemede`);
 });
