@@ -31,20 +31,21 @@ module.exports = {
     },
 
     async handleCounting(message) {
-        const messageContent = message.content.trim();
+        let messageContent = message.content.trim();
+
+        // "OwO" veya "owo" gibi ifadeleri temizle ve sadece sayıyı ayıkla
+        messageContent = messageContent.replace(/owo/gi, '').trim();
+
         const number = parseInt(messageContent, 10);
 
-        // Kullanıcının attığı mesaj bir sayı değilse
         if (isNaN(number)) {
-            // Mesajı silmek yerine sadece bir uyarı mesajı gönder
             await message.reply({
-                content: 'Lütfen sadece bir sayı girin.',
+                content: 'Lütfen sadece bir sayı veya "owo <sayı>" şeklinde bir mesaj girin.',
                 allowedMentions: { repliedUser: true }
             });
             return;
         }
 
-        // Aynı kullanıcının ard arda sayı yazmasını engelle
         if (message.author.id === lastUserId) {
             await message.reply({
                 content: `Hey, art arda sayı sayamazsın! Son sayı **${lastNumber}** olarak kalacak.`,
@@ -53,18 +54,16 @@ module.exports = {
             return;
         }
 
-        // Eğer yazılan sayı beklenen sayıya eşitse
         if (number === lastNumber + 1) {
             lastNumber = number;
             lastUserId = message.author.id;
-            await message.react('1277603930733412474').catch(console.error); // Doğru sayı emojisi
+            await message.react('1277603930733412474').catch(console.error);
         } else {
-            // Yanlış sayı girildiğinde sadece uyarı ver ve tepki ekle
             await message.reply({
                 content: `Yanlış sayı! Doğru sayı **${lastNumber + 1}** idi. Oyun sıfırlanmayacak.`,
                 allowedMentions: { repliedUser: true }
             });
-            await message.react('1277604016313995305').catch(console.error); // Yanlış sayı emojisi
+            await message.react('1277604016313995305').catch(console.error);
         }
     }
 };
