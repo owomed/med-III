@@ -1,12 +1,10 @@
 let lastNumber = 0;
-let lastUserId = null; // En son doğru sayıyı yazan kullanıcının ID'si
-const countingChannelId = '1410691761386426499'; // Sayı sayma kanalının ID'sini buraya ekle
+let lastUserId = null;
+const countingChannelId = '1410691761386426499';
 
 module.exports = {
-    // Sayı sayma kanalı ID'si
     countingChannelId: countingChannelId,
 
-    // Bot açıldığında son doğru sayıyı bulma
     async initializeLastNumber(client) {
         const channel = client.channels.cache.get(countingChannelId);
         if (!channel) {
@@ -24,7 +22,7 @@ module.exports = {
                     lastNumber = number;
                     lastUserId = message.author.id;
                     console.log(`Bot yeniden başlatıldı. Son doğru sayı: ${lastNumber}`);
-                    return; 
+                    return;
                 }
             }
         } catch (error) {
@@ -32,14 +30,17 @@ module.exports = {
         }
     },
 
-    // Yeni mesaj geldiğinde sayma işlemini yönetme
     async handleCounting(message) {
         const messageContent = message.content.trim();
         const number = parseInt(messageContent, 10);
 
+        // Kullanıcının attığı mesaj bir sayı değilse
         if (isNaN(number)) {
-            // Sayı değilse mesajı sil
-            await message.delete().catch(console.error);
+            // Mesajı silmek yerine sadece bir uyarı mesajı gönder
+            await message.reply({
+                content: 'Lütfen sadece bir sayı girin.',
+                allowedMentions: { repliedUser: true }
+            });
             return;
         }
 
@@ -49,7 +50,6 @@ module.exports = {
                 content: `Hey, art arda sayı sayamazsın! Son sayı **${lastNumber}** olarak kalacak.`,
                 allowedMentions: { repliedUser: true }
             });
-            await message.delete().catch(console.error);
             return;
         }
 
@@ -59,9 +59,9 @@ module.exports = {
             lastUserId = message.author.id;
             await message.react('1277603930733412474').catch(console.error); // Doğru sayı emojisi
         } else {
-            // Yanlış sayı girildiğinde oyunu sıfırlama, sadece uyarı ver
+            // Yanlış sayı girildiğinde sadece uyarı ver ve tepki ekle
             await message.reply({
-                content: `Yanlış sayı! Doğru sayı **${lastNumber + 1}** idi.`,
+                content: `Yanlış sayı! Doğru sayı **${lastNumber + 1}** idi. Oyun sıfırlanmayacak.`,
                 allowedMentions: { repliedUser: true }
             });
             await message.react('1277604016313995305').catch(console.error); // Yanlış sayı emojisi
