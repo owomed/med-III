@@ -4,11 +4,22 @@ const fs = require('fs');
 const path = require('path');
 require('dotenv').config();
 
+// --- MONGODB ENTEGRASYONU İÇİN EKLENEN KISIMLAR ---
+const mongoose = require('mongoose');
+const AFKModel = require('./models/AFK'); // AFK modelinizin yolunu kontrol edin!
+// --- ENTEGRASYON SONU ---
+
 const config = require('./Settings/config.json');
-const { readAFKData, writeAFKData } = require('./helper');
+// const { readAFKData, writeAFKData } = require('./helper'); // ARTIK KULLANILMIYOR, SİLİNDİ!
 const counting = require('./counting');
 const dailyMessage = require('./dailyMessage');
 const stayInVoice = require('./stayInVoice');
+
+// MONGODB BAĞLANTISI
+// MONGO_URI'yi .env dosyanızdan veya config.json'dan okuyun
+mongoose.connect(process.env.MONGO_URI || config.MONGO_URI)
+    .then(() => console.log('✅ MongoDB\'ye başarıyla bağlandı.'))
+    .catch(err => console.error('❌ MongoDB bağlantı hatası:', err));
 
 const client = new Client({
     intents: [
@@ -26,9 +37,6 @@ const client = new Client({
 
 client.commands = new Collection();
 client.aliases = new Collection();
-
-// Komutları ve olayları yükleme kısımları aynı kalacak...
-// (Bu kısım senin yukarıda verdiğin kodun aynısıdır)
 
 // Komutları yükleme
 const commandsPath = path.join(__dirname, 'commands');
@@ -93,26 +101,54 @@ client.on('interactionCreate', async interaction => {
 client.on('messageCreate', async message => {
     if (message.author.bot || message.channel.type === 'dm') return;
     const { prefix } = config;
-    const afkData = await readAFKData();
 
-    // AFK kontrolü
-    const afkCommand = client.commands.get('afk');
-    if (afkCommand) {
-        if (afkData[message.author.id]) {
-            const userData = afkData[message.author.id];
-            delete afkData[message.author.id];
-            await writeAFKData(afkData);
-            await message.member.setNickname(userData.nickname).catch(console.error);
-            await message.reply({ content: '`AFK modundan çıktınız. Hoş geldiniz!`', allowedMentions: { repliedUser: false } });
-        }
+    // --- YENİ MONGODB TABANLI AFK KONTROLÜ VE OTOMATİK ÇIKIŞ ---
+    const userId = message.author.id;
+    const guildId = message.guild.id;
+    const isAfkCommand = message.content.startsWith(prefix) && (message.content.slice(prefix.length).trim().split(/ +/)[0].toLowerCase() === 'afk' || message.content.slice(prefix.length).trim().split(/ +/)[0].toLowerCase() === 'away');
 
-        message.mentions.users.forEach(async user => {
-            if (afkData[user.id]) {
-                const userData = afkData[user.id];
-                await message.reply({ content: `\`${user.username} şu an "${userData.reason}" sebebiyle AFK.\``, allowedMentions: { repliedUser: false } });
+    // 1. Kendi AFK kaydını kontrol et (OTOMATİK ÇIKIŞ)
+    const existingAFK = await AFKModel.findOne({ userId, guildId });
+
+    if (existingAFK) {
+        // Eğer AFK komutunu kullanarak AFK'dan çıkmaya çalışmıyorsa otomatik çıkar.
+        // Komut kullanıldığında, çıkış işlemini AFK komutunun kendisi halleder.
+        if (!isAfkCommand) {
+            // Otomatik AFK'dan çıkış işlemi
+            const member = message.member;
+            
+            // Takma adını eski haline getir
+            if (member) {
+                await member.setNickname(existingAFK.nickname)
+                    .catch(e => console.error(`AFK çıkışı takma ad sıfırlama hatası (Otomatik): ${e.message}`));
             }
-        });
+            
+            // Kaydı veritabanından sil
+            await AFKModel.deleteOne({ userId, guildId });
+            
+            message.reply({ 
+                content: `**Tekrar hoş geldiniz!** AFK modundan otomatik olarak çıkarıldınız.`,
+                allowedMentions: { repliedUser: false } 
+            }).catch(console.error);
+        }
     }
+    
+    // 2. Etiketlenen kullanıcıların AFK durumunu kontrol et
+    message.mentions.users.forEach(async user => {
+        // Kendi kendini etiketlemeyi ve botları atla
+        if (user.id !== userId && !user.bot) { 
+            const mentionedAFK = await AFKModel.findOne({ userId: user.id, guildId });
+            
+            if (mentionedAFK) {
+                // AFK olan kişiyi etiketleyen kullanıcıya bilgi ver
+                message.reply({
+                    content: `🚨 **${mentionedAFK.nickname}** şu anda AFK ve sebebi: \`${mentionedAFK.reason}\`.`,
+                    allowedMentions: { repliedUser: false } 
+                }).catch(console.error);
+            }
+        }
+    });
+    // --- AFK KONTROLÜ SONU ---
 
     // Sayı sayma oyunu
     if (message.channel.id === counting.countingChannelId) {
@@ -143,7 +179,7 @@ client.on('messageCreate', async message => {
 Saat <t:${Math.floor(eventEndTime / 1000)}:t> kadar <#1238045899360309289>, <#1277593114269454396>, <#1277593211363262546> ve <#1277593298047078460> kanallarında şanslı sayı oyunu oynuyoruz.
     
 > OwO yazarak <@1236235490118860880>'ün vereceği sayılardan şanslı sayılara dikkat ediniz.
->  
+>  
 > *Şanslı sayılar:* **${randomNumbers.join(', ')}**
     
 **STOK:**
